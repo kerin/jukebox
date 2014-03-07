@@ -49,6 +49,24 @@ class Song(models.Model):
     Year = models.IntegerField(null=True)
     Length = models.IntegerField()
     Filename = models.CharField(max_length=1000)
+    Artwork = models.ForeignKey('jukebox_core.Artwork', blank=True, null=True)
+
+
+def artwork_upload_path(instance, filename):
+    return "artwork/{}.{}".format(instance.MD5, filename.split('.')[-1])
+
+
+class Artwork(models.Model):
+    MD5 = models.CharField(max_length=32, unique=True)
+    Image = models.ImageField(upload_to=artwork_upload_path,
+                              blank=True, default='',
+                              height_field='Image_height',
+                              width_field='Image_width')
+    Image_height = models.PositiveIntegerField(blank=True, null=True)
+    Image_width = models.PositiveIntegerField(blank=True, null=True)
+
+    def __unicode__(self):
+        return self.Image.name
 
 
 class Queue(models.Model):

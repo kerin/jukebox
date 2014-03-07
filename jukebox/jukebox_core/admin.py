@@ -1,6 +1,7 @@
 # -*- coding: UTF-8 -*-
 
-from models import Artist, Genre, Album, Song, Queue, History, Favourite
+from models import (Artist, Genre, Album, Song, Queue, History, Favourite,
+                    Artwork)
 from django.contrib import admin
 
 
@@ -43,3 +44,4 @@ admin.site.register(Song, SongAdmin)
 admin.site.register(Queue, QueueAdmin)
 admin.site.register(History, HistoryAdmin)
 admin.site.register(Favourite, FavouriteAdmin)
+admin.site.register(Artwork)

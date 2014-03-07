@@ -1,8 +1,13 @@
 # -*- coding: UTF-8 -*-
-from jukebox.jukebox_core.models import Artist, Album, Song, Genre
+from hashlib import md5
+import mimetypes
+
+from django.core.files.base import ContentFile
+from jukebox.jukebox_core.models import Artist, Album, Song, Genre, Artwork
 from mutagen.easyid3 import EasyID3
 from mutagen.mp3 import MP3, HeaderNotFoundError
 from mutagen.id3 import ID3NoHeaderError
+from mutagen import File
 
 
 class FileIndexer:
@@ -13,6 +18,7 @@ class FileIndexer:
 
         try:
             id3 = EasyID3(filename)
+
             tags = {
                 "artist": None,
                 "title": None,
@@ -60,7 +66,27 @@ class FileIndexer:
                 Length=tags["length"],
                 Filename=filename
             )
+
+            try:
+                mp3 = File(filename)
+                apic = mp3.tags['APIC:']
+                _md5 = md5(apic.data).hexdigest()
+                extension = mimetypes.guess_extension(apic.mime)
+
+                try:
+                    artwork = Artwork.objects.get(MD5=_md5)
+                except Artwork.DoesNotExist:
+                    artwork = Artwork(MD5=_md5)
+                    artwork.Image.save('image{}'.format(extension),
+                                       ContentFile(apic.data))
+                    artwork.save()
+
+                song.Artwork = artwork
+            except KeyError:
+                pass
+
             song.save()
+
         except HeaderNotFoundError:
             print "File contains invalid header data: " + filename
         except ID3NoHeaderError:
