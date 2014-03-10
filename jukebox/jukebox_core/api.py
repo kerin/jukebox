@@ -5,11 +5,14 @@ from django.db import transaction
 from django.db.models import Count, Min, Q
 from django.contrib.sessions.models import Session
 from django.utils import formats
+from django.conf import settings
 import os, re, time
 from datetime import datetime
 from signal import SIGABRT
 from django.contrib.auth.models import User
+from pyItunes import Library
 from models import Song, Artist, Album, Genre, Queue, Favourite, History, Player
+
 
 
 class api_base:
@@ -247,6 +250,8 @@ class songs(api_base):
         "title": "Title",
     }
 
+    itunes_playlist_tracks = []
+
     def index(self, page=1):
         object_list = Song.objects.all()
 
@@ -365,7 +370,12 @@ class songs(api_base):
             data.delete()
         except ObjectDoesNotExist:
             try:
-                song_instance = self.getRandomSongByPreferences()
+                if all([settings.ITUNES_LIBRARY_XML_PATH,
+                        settings.ITUNES_RANDOM_PLAYLIST_NAME]):
+                    song_instance = self.getRandomSongFromITunesPlaylist()
+                else:
+                    song_instance = self.getRandomSongByPreferences()
+
                 self.addToHistory(song_instance, None)
             except ObjectDoesNotExist:
                 song_instance = Song.objects.order_by('?')[0:1].get()
@@ -377,6 +387,27 @@ class songs(api_base):
             return self.getNextSong()
 
         return song_instance
+
+    def getITunesPlaylistTrackNames(self, name):
+        itunes_library = Library(settings.ITUNES_LIBRARY_XML_PATH)
+        return ['/' + s.location
+                for s in itunes_library.getPlaylist(name).tracks]
+
+    def getRandomSongFromITunesPlaylist(self):
+        if not self.itunes_playlist_tracks:
+            track_names = self.getITunesPlaylistTrackNames(
+                settings.ITUNES_RANDOM_PLAYLIST_NAME)
+            self.itunes_playlist_tracks = list(Song.objects.filter(
+                Filename__in=track_names).order_by('?'))
+
+        last_played = History.objects.first()
+
+        # don't play the same song twice in a row
+        if (len(self.itunes_playlist_tracks) > 1 and
+                self.itunes_playlist_tracks[-1] == last_played):
+            return self.itunes_playlist_tracks.pop(-2)
+        else:
+            return self.itunes_playlist_tracks.pop()
 
     def getRandomSongByPreferences(self):
         artists = {}

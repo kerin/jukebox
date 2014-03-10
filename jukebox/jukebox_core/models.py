@@ -48,7 +48,7 @@ class Song(models.Model):
     Title = models.CharField(max_length=200)
     Year = models.IntegerField(null=True)
     Length = models.IntegerField()
-    Filename = models.CharField(max_length=1000)
+    Filename = models.CharField(max_length=1000, db_index=True)
     Artwork = models.ForeignKey('jukebox_core.Artwork', blank=True, null=True)
 
 
