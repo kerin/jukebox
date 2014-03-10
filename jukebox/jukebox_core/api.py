@@ -330,6 +330,7 @@ class songs(api_base):
                 "length": None,
                 "queued": False,
                 "favourite": False,
+                "artwork": None,
             }
             if not item.Title is None:
                 dataset["title"] = item.Title
@@ -346,6 +347,8 @@ class songs(api_base):
                 dataset["genre"]["name"] = item.Genre.Name
             if not item.Length is None:
                 dataset["length"] = item.Length
+            if not item.Artwork is None:
+                dataset["artwork"] = item.Artwork.Image.url
 
             dataset = self.result_add_queue_and_favourite(item, dataset)
             result["itemList"].append(dataset)
