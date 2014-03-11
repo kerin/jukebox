@@ -357,11 +357,11 @@ class songs(api_base):
 
     def getNextSong(self):
         # commit transaction to force fresh queryset result
-        try:
-            transaction.enter_transaction_management()
-            transaction.commit()
-        except BaseException:
-            pass
+        # try:
+        #     transaction.enter_transaction_management()
+        #     transaction.commit()
+        # except BaseException:
+        #     pass
 
         try:
             data = Queue.objects.all()
