@@ -4,12 +4,15 @@ from django.conf.urls import patterns, include, url
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.conf import settings
+from django.views.generic import TemplateView
 
 admin.autodiscover()
 
 urlpatterns = patterns("",
     url(r"^admin/", include(admin.site.urls)),
     url(r"^admin/doc/", include("django.contrib.admindocs.urls")),
+
+    url(r"^client/", TemplateView.as_view(template_name='client/index.html')),
 
     url(r'', include('jukebox.jukebox_web.urls')),
     url(r'', include('jukebox.jukebox_core.urls')),

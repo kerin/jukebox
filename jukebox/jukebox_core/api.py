@@ -594,6 +594,7 @@ class history(api_base):
             "created": formats.date_format(
                 item.Created, "DATETIME_FORMAT"
             ),
+            "artwork": None,
             "votes": item.User.count(),
             "users": [],
             "remaining": createdTimestamp + item.Song.Length - int(time.time())
@@ -611,6 +612,8 @@ class history(api_base):
         if not item.Song.Genre is None:
             dataset["genre"]["id"] = item.Song.Genre.id
             dataset["genre"]["name"] = item.Song.Genre.Name
+        if not item.Song.Artwork is None:
+            dataset["artwork"] = item.Song.Artwork.Image.url
 
         return dataset
 

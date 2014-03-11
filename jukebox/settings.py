@@ -20,13 +20,22 @@ if not os.path.exists(JUKEBOX_STORAGE_PATH):
     except os.error:
         JUKEBOX_STORAGE_PATH = BASE_DIR
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': os.path.join(
+#             JUKEBOX_STORAGE_PATH,
+#             'db.sqlite'
+#         ),
+#     }
+# }
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(
-            JUKEBOX_STORAGE_PATH,
-            'db.sqlite'
-        ),
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'jukebox',
+        'USER': 'root',
+        'PASSWORD': '',
     }
 }
 
@@ -84,6 +93,7 @@ INSTALLED_APPS = (
     'south',
     'jukebox_core',
     'jukebox_web',
+    'client',
 )
 
 # automatically add jukebox plugins
@@ -105,6 +115,10 @@ LOGIN_ERROR_URL    = '/login/error'
 LOGIN_REDIRECT_URL = '/'
 
 SESSION_TTL = 300
+
+ITUNES_LIBRARY_XML_PATH = '/Users/kerin/Music/iTunes 1/iTunes Library.xml'
+ITUNES_RANDOM_PLAYLIST_NAME = 'test'
+
 
 sys.path.append(JUKEBOX_STORAGE_PATH)
 try:

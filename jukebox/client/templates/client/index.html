@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Jukebox</title>
+  <link href="http://netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css" rel="stylesheet">
+  <script src="http://code.jquery.com/jquery-2.1.0.min.js"></script>
+  <script src="http://netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+  <script src="http://cdnjs.cloudflare.com/ajax/libs/handlebars.js/2.0.0-alpha.1/handlebars.min.js"></script>
+  <script>
+function getCookie(name) {
+    var cookieValue = null;
+    if (document.cookie && document.cookie != '') {
+        var cookies = document.cookie.split(';');
+        for (var i = 0; i < cookies.length; i++) {
+            var cookie = jQuery.trim(cookies[i]);
+            // Does this cookie string begin with the name we want?
+            if (cookie.substring(0, name.length + 1) == (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+var csrftoken = getCookie('csrftoken');
+  </script>
+  <style type="text/css">
+  #results table {
+    font-size: small;
+  }
+  </style>
+</head>
+<body>
+
+{% verbatim %}
+<script id="result-template" type="text/x-handlebars-template">
+  {{#each itemList}}
+  <tr>
+    <td>{{title}}</td>
+    <td>{{album.title}}</td>
+    <td>{{artist.name}}</td>
+    <td><a href="#" data-id="{{id}}">Add +</a></td>
+  </tr>
+  {{/each}}
+</script>
+
+<script id="nowplaying-template" type="text/x-handlebars-template">
+  <img src="{{artwork}}" width="300">
+  <p>{{artist.name}} - {{title}}</p>
+  <p><a href="#" id="skip">Skip track</a></p>
+</script>
+
+<script id="queue-template" type="text/x-handlebars-template">
+  {{#each itemList}}
+  <tr>
+    <td>{{title}}</td>
+    <td>{{artist.name}}</td>
+  </tr>
+  {{/each}}
+</script>
+
+{% endverbatim %}
+
+<div class="container">
+
+  <div class="row">
+
+    <div class="col-md-6">
+      <h2>Search</h2>
+      <form class="form-inline" role="form" id="search">
+        <div class="form-group">
+          <label class="sr-only" for="query">Term</label>
+          <input type="search" class="form-control" id="query" placeholder="Enter search term">
+        </div>
+        <button type="submit" class="btn btn-default">Search</button>
+      </form>
+
+      <div id="results">
+        <h2 id="num-results">0 results</h2>
+        <table class="table table-striped">
+          <thead>
+            <tr>
+              <th>Track</th>
+              <th>Album</th>
+              <th>Artist</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <h2>Now Playing</h2>
+      <div id="now-playing">
+
+      </div>
+
+      <h2>Queue</h2>
+      <div id="queue">
+        <table class="table table-striped">
+          <thead>
+            <tr>
+              <th>Track</th>
+              <th>Artist</th>
+            </tr>
+          </thead>
+          <tbody>
+
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+var base_url = 'http://127.0.0.1:8001',
+  username = 'jukebox',
+  password = 'jukebox';
+
+var result_template = Handlebars.compile($('#result-template').html());
+var nowplaying_template = Handlebars.compile($('#nowplaying-template').html());
+var queue_template = Handlebars.compile($('#queue-template').html());
+
+var queue;
+function updateQueue(){
+  $.ajax({
+    username: username,
+    password: password,
+    url: '/api/v1/queue'
+  }).done(function(data){
+    if(queue != data){
+      queue = data;
+      $('#queue tbody').html(queue_template(data));
+    }
+  });
+}
+
+$('#search').on('submit', function(e){
+  e.preventDefault();
+
+  $.ajax({
+    username: username,
+    password: password,
+    url: '/api/v1/songs?search_term=' + $('#query').val()
+  }).done(function(data){
+    var num_results = data.itemList.length;
+    $('#num-results').html(num_results + ' results');
+
+    if(num_results > 0){
+      $('#results tbody').html(result_template(data));
+    }
+
+  });
+
+});
+
+
+$('#results').on('click', 'tbody a', function(e){
+  e.preventDefault();
+
+  var _id = $(e.currentTarget).attr('data-id');
+  console.log(_id);
+
+  $.ajax({
+    url: '/api/v1/queue',
+    type: 'POST',
+    data: {id: _id},
+    beforeSend: function(xhr) {
+      xhr.setRequestHeader ("Authorization", "Basic anVrZWJveDpqdWtlYm94");
+      xhr.setRequestHeader("X-CSRFToken", csrftoken);
+    },
+  }).done(function(data){
+    updateQueue();
+  });
+
+});
+
+$('#now-playing').on('click', '#skip', function(e){
+  e.preventDefault();
+  $.ajax({
+    username: username,
+    password: password,
+    url: '/api/v1/songs/skip'
+  });
+});
+
+var currentTrack;
+setInterval(function(){
+  $.ajax({
+    username: username,
+    password: password,
+    url: '/api/v1/songs/current'
+  }).done(function(data){
+    if(currentTrack != data.id){
+      currentTrack = data.id;
+      $('#now-playing').html(nowplaying_template(data));
+    }
+  });
+}, 1000);
+
+setInterval(function(){
+  updateQueue();
+}, 1000);
+
+</script>
+
+</body>
+</html>
